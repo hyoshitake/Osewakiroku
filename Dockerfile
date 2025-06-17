@@ -8,9 +8,6 @@ RUN apt-get update && \
     apt-get install -y curl git wget unzip zip xz-utils sudo && \
     rm -rf /var/lib/apt/lists/*
 
-# 開発者ユーザーのホームディレクトリを設定
-ENV HOME=/opt/app
-
 # Java(Zulu OpenJDK)のインストール
 ENV JAVA_HOME=/opt/zulu17.56.15-ca-jdk17.0.14-linux_x64
 
@@ -50,7 +47,7 @@ ENV PATH=${FLUTTER_ROOT}/bin:$PATH
 RUN rm -rf /tmp/*
 
 # 作業ディレクトリを設定
-WORKDIR $HOME
+WORKDIR /opt/app
 
 # Android SDK の各コンポーネントを sdkmanager でインストール（yesで自動応答）
 RUN yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-34" "build-tools;33.0.1"
