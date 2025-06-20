@@ -55,17 +55,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  final TextEditingController _sheetIdController = TextEditingController();
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  void _onLoginPressed() {
+    // ログインボタンが押されたときの処理をここに実装
+    if (_sheetIdController.text.isNotEmpty) {
+      // 入力されたGoogle SheetのIDを使用した処理
+      print('Google Sheet ID: ${_sheetIdController.text}');
+    }
   }
 
   @override
@@ -87,39 +84,57 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Text(
+                'Google SheetのIDを入力してください',
+                style: TextStyle(
+                  color: Color(0xFFFF8080), // 薄めの赤色
+                  fontSize: 16, // 1行で収まる程度の文字サイズ
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('ID: '),
+                  Expanded(
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 300),
+                      child: TextField(
+                        controller: _sheetIdController,
+                        decoration: const InputDecoration(
+                          contentPadding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          border: OutlineInputBorder(),
+                          suffixIcon: Icon(Icons.edit), // ペンマーク
+                          hintText: 'Google SheetのIDを入力',
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: _onLoginPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.lightBlue.shade200, // 薄い青色
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12), // 角丸の四角
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                ),
+                child: const Text('ログイン'),
+              ),
+            ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
