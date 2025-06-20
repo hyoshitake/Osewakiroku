@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'log.dart';
 
 void main() {
   runApp(const MyApp());
@@ -62,6 +63,12 @@ class _MyHomePageState extends State<MyHomePage> {
     if (_sheetIdController.text.isNotEmpty) {
       // 入力されたGoogle SheetのIDを使用した処理
       print('Google Sheet ID: ${_sheetIdController.text}');
+
+      // ログ画面に遷移
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const LogScreen()),
+      );
     }
   }
 
