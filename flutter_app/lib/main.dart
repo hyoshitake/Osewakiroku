@@ -64,10 +64,31 @@ class _MyHomePageState extends State<MyHomePage> {
       // 入力されたGoogle SheetのIDを使用した処理
       print('Google Sheet ID: ${_sheetIdController.text}');
 
-      // ログ画面に遷移
+      // ログ画面に右からフェードインするアニメーションで遷移
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const LogScreen()),
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const LogScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(1.0, 0.0);
+            const end = Offset.zero;
+            const curve = Curves.easeInOut;
+
+            var tween =
+                Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            var offsetAnimation = animation.drive(tween);
+
+            return SlideTransition(
+              position: offsetAnimation,
+              child: FadeTransition(
+                opacity: animation,
+                child: child,
+              ),
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 500),
+        ),
       );
     }
   }

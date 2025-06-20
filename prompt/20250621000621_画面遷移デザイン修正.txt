@@ -1,0 +1,1 @@
+main.dartの_onLoginPressedを押して、log.dartに遷移する際に、右からフェードインするようなアニメーションで画面遷移してください。
