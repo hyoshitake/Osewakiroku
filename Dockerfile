@@ -5,7 +5,10 @@ SHELL ["/bin/bash", "-c"]
 
 # 必要なパッケージのインストール
 RUN apt-get update && \
-    apt-get install -y curl git wget unzip zip xz-utils sudo && \
+    apt-get install -y curl git wget unzip zip xz-utils sudo \
+    # Linux用Flutterアプリに必要なパッケージを追加
+    clang cmake ninja-build pkg-config libgtk-3-dev \
+    liblzma-dev libstdc++-10-dev g++ && \
     rm -rf /var/lib/apt/lists/*
 
 # Java(Zulu OpenJDK)のインストール
@@ -43,6 +46,25 @@ RUN wget -P /tmp https://storage.googleapis.com/flutter_infra_release/releases/s
 # Flutterのパスを設定
 ENV PATH=${FLUTTER_ROOT}/bin:$PATH
 
+# CMakeのインストール
+# https://qiita.com/hyasuda/items/16c21458f0ecd08db857
+ENV CMAKE_ROOT=/opt/cmake
+RUN mkdir ${CMAKE_ROOT} && \
+    wget -P /tmp https://github.com/Kitware/CMake/releases/download/v4.0.3/cmake-4.0.3-linux-x86_64.sh && \
+    cd ${CMAKE_ROOT} && \
+    bash /tmp/cmake-4.0.3-linux-x86_64.sh --skip-license --prefix=/opt/cmake
+ENV PATH=${CMAKE_ROOT}/bin:$PATH
+
+# 環境変数CXXを設定して、CMakeがclang++を見つけられるようにする
+ENV CXX=clang++
+ENV CC=clang
+
+# Ninjaのインストール
+RUN wget -P /tmp https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-linux.zip && \
+    unzip /tmp/ninja-linux.zip -d /opt/ && \
+    mv /opt/ninja /usr/local/bin/ && \
+    chmod +x /usr/local/bin/ninja
+
 # 不要なファイルを削除
 RUN rm -rf /tmp/*
 
@@ -58,5 +80,7 @@ RUN yes | flutter doctor --android-licenses
 RUN flutter --disable-analytics
 # flutter pub getコマンド実行用に必要な設定
 RUN git config --global --add safe.directory /opt/flutter
+# Linuxデスクトップアプリのサポートを有効にする
+RUN flutter config --enable-linux-desktop
 # コンテナ起動時にbashを実行
 CMD ["/bin/bash"]
