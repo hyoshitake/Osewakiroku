@@ -1,0 +1,5 @@
+GoogleSheetを連携してください
+- lib/screens/main.dartのInputDecorationに入力されたIDを使ってGoogleSheetのURLを作ります。
+  - `https://docs.google.com/spreadsheets/d/${ID}`としてURLを作ります
+- lib/screens/log.dartのElevatedButtonのボタンを押すと、GoogleSheetに行を追加してください
+- lib/screens/log.dartの_logsはGoogleSheetから取得してください

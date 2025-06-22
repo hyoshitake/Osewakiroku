@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'screens/log.dart';
+import 'services/google_sheets_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -57,14 +60,67 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _sheetIdController = TextEditingController();
+  bool _isLoading = false;
+  String _errorMessage = '';
 
-  void _onLoginPressed() {
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedSheetId();
+  }
+
+  // 保存されたシートIDを読み込む
+  Future<void> _loadSavedSheetId() async {
+    final sheetId = await GoogleSheetsService.instance.getSavedSheetId();
+    if (sheetId != null && sheetId.isNotEmpty) {
+      setState(() {
+        _sheetIdController.text = sheetId;
+      });
+    }
+  }
+
+  // GoogleシートのURLを開く
+  void _openGoogleSheet() async {
+    final url = GoogleSheetsService.instance.getSheetUrl();
+    if (url.isEmpty) return;
+
+    try {
+      final Uri uri = Uri.parse(url);
+      await launchUrl(uri);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('URLを開けませんでした')),
+      );
+    }
+  }
+
+  void _onLoginPressed() async {
     // ログインボタンが押されたときの処理をここに実装
     if (_sheetIdController.text.isNotEmpty) {
-      // 入力されたGoogle SheetのIDを使用した処理
-      print('Google Sheet ID: ${_sheetIdController.text}');
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
+
+      final sheetId = _sheetIdController.text;
+
+      // Google Sheetsサービスを初期化
+      final success = await GoogleSheetsService.instance.initialize(sheetId);
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (!success) {
+        setState(() {
+          _errorMessage = 'Google Sheetへの接続に失敗しました。IDを確認してください。';
+        });
+        return;
+      }
 
       // ログ画面に右からフェードインするアニメーションで遷移
+      if (!mounted) return;
+
       Navigator.push(
         context,
         PageRouteBuilder(
@@ -95,21 +151,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
+        actions: [
+          if (_sheetIdController.text.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.open_in_new),
+              tooltip: 'Google Sheetを開く',
+              onPressed: _openGoogleSheet,
+            ),
+        ],
       ),
       body: Center(
         child: Padding(
@@ -146,19 +199,29 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: _onLoginPressed,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.lightBlue.shade200, // 薄い青色
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12), // 角丸の四角
+              if (_errorMessage.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    _errorMessage,
+                    style: const TextStyle(color: Colors.red),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 ),
-                child: const Text('ログイン'),
-              ),
+              const SizedBox(height: 30),
+              _isLoading
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: _onLoginPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.lightBlue.shade200, // 薄い青色
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12), // 角丸の四角
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 40, vertical: 12),
+                      ),
+                      child: const Text('ログイン'),
+                    ),
             ],
           ),
         ),
