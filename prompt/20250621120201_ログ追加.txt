@@ -1,0 +1,13 @@
+ログクラスを追加してください
+- lib/models/log.dartを新規作成してください
+- Logとします。
+- メンバ変数として以下を保持します
+  - timestamp
+  - ログ種類
+  - データ部１
+  - データ部２
+  - データ部３
+  - データ部４
+  - メッセージ
+- lib/screens/log.dart のElevatedButtonをクリックするとLogを挿入します
+- lib/screens/log.dart のElevatedButtonの下に挿入されたLogのタイムスタンプとメッセージをリスト表示してください。
