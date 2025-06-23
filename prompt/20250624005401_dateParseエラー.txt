@@ -1,0 +1,2 @@
+flutter_app/lib/services/google_sheets_service.dartの`timestamp: DateTime.parse(row[0])`でエラーが発生しています。
+Google Sheetsのタイムスタンプはエポック日付の形式で渡されるため、小数点付の数値です。エラーがおきないにょうにDateTimeにエポック日付を変換してください。

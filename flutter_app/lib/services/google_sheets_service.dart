@@ -137,8 +137,27 @@ class GoogleSheetsService {
 
       // 各行をLogオブジェクトに変換
       return dataRows.map((row) {
+        // エポック日付（小数点付の数値）をDateTimeに変換する処理
+        DateTime timestamp;
+        try {
+          // まず標準的なISO8601形式での解析を試みる
+          timestamp = DateTime.parse(row[0]);
+        } catch (e) {
+          try {
+            // エポック日付の場合（秒単位）
+            final epochSeconds = double.parse(row[0]);
+            timestamp = DateTime.fromMillisecondsSinceEpoch(
+              (epochSeconds * 1000).round(),
+            );
+          } catch (e) {
+            // どちらの形式でも解析できない場合は現在時刻を使用
+            debugPrint('タイムスタンプの解析エラー: ${row[0]}');
+            timestamp = DateTime.now();
+          }
+        }
+
         return Log(
-          timestamp: DateTime.parse(row[0]),
+          timestamp: timestamp,
           logType: row[1],
           message: row[2],
           data1: row.length > 3 ? row[3] : '',
