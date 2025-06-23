@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gsheets/gsheets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/log.dart';
+import '../config/credentials.dart';
 
 class GoogleSheetsService {
   static const _sheetIdKey = 'google_sheet_id';
@@ -32,8 +33,8 @@ class GoogleSheetsService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_sheetIdKey, sheetId);
 
-      // 認証不要で公開シートにアクセスする場合は空のクレデンシャルを使用
-      final gsheets = GSheets({});
+      // 外部ファイルから認証情報を取得
+      final gsheets = GSheets(googleSheetsCredentials);
 
       // スプレッドシートへの接続
       _spreadsheet = await gsheets.spreadsheet(sheetId);
