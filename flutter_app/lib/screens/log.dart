@@ -13,14 +13,52 @@ class LogScreen extends StatefulWidget {
 class _LogScreenState extends State<LogScreen> {
   List<Log> _logs = [];
   bool _isLoading = true;
+  bool _isLoadingMore = false;
   String _errorMessage = '';
-  // 1時間ごとにグループ化されたログを格納するマップ
-  SplayTreeMap<DateTime, List<Log>> _groupedLogs = SplayTreeMap<DateTime, List<Log>>((a, b) => b.compareTo(a));
+  // タイムスタンプごとにグループ化されたログを格納するマップ（時刻単位）
+  SplayTreeMap<DateTime, List<Log>> _groupedLogs =
+      SplayTreeMap<DateTime, List<Log>>((a, b) => b.compareTo(a));
+  ScrollController _scrollController = ScrollController();
+  int _displayedHours = 12; // 表示する時間数（初期は12時間）
 
   @override
   void initState() {
     super.initState();
     _loadLogs();
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // スクロールリスナー（インフィニティスクロール用）
+  void _scrollListener() {
+    if (_scrollController.position.pixels ==
+            _scrollController.position.maxScrollExtent &&
+        !_isLoadingMore) {
+      _loadMoreLogs();
+    }
+  }
+
+  // 追加のログを読み込む（過去のデータ）
+  Future<void> _loadMoreLogs() async {
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    // 表示時間を12時間延長
+    _displayedHours += 12;
+    _groupLogs(_logs);
+
+    // 少し待機してからローディングを終了（データを再グループ化する時間）
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    setState(() {
+      _isLoadingMore = false;
+    });
   }
 
   // Google Sheetsからログデータを読み込む
@@ -51,25 +89,25 @@ class _LogScreenState extends State<LogScreen> {
   void _groupLogs(List<Log> logs) {
     _groupedLogs.clear();
 
-    // 現在の日付から24時間分の枠を作成
+    // 現在の時刻から過去に向かって指定時間分の枠を作成
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final currentHour = DateTime(now.year, now.month, now.day, now.hour);
 
-    // 24時間分の空の時間枠を作成
-    for (int i = 0; i < 24; i++) {
-      final hourSlot = today.add(Duration(hours: i));
+    // 現在の時刻から過去に向かって時間枠を作成
+    for (int i = 0; i < _displayedHours; i++) {
+      final hourSlot = currentHour.subtract(Duration(hours: i));
       _groupedLogs[hourSlot] = [];
     }
 
     // ログを適切な時間枠に振り分ける
     for (final log in logs) {
       final logDate = log.timestamp;
-      final hourSlot = DateTime(logDate.year, logDate.month, logDate.day, logDate.hour);
+      final hourSlot =
+          DateTime(logDate.year, logDate.month, logDate.day, logDate.hour);
 
-      if (!_groupedLogs.containsKey(hourSlot)) {
-        _groupedLogs[hourSlot] = [];
+      if (_groupedLogs.containsKey(hourSlot)) {
+        _groupedLogs[hourSlot]!.add(log);
       }
-      _groupedLogs[hourSlot]!.add(log);
     }
   }
 
@@ -250,13 +288,40 @@ class _LogScreenState extends State<LogScreen> {
                       child: _groupedLogs.isEmpty
                           ? const Center(child: Text('ログはまだありません'))
                           : ListView.builder(
-                              itemCount: _groupedLogs.length,
+                              controller: _scrollController,
+                              itemCount: _groupedLogs.length +
+                                  (_isLoadingMore ? 1 : 1), // 「さらに読み込む」用の追加項目
                               itemBuilder: (context, index) {
-                                final hourSlot = _groupedLogs.keys.elementAt(index);
+                                // 最後の項目は「さらに読み込む」またはローディング表示
+                                if (index == _groupedLogs.length) {
+                                  return _isLoadingMore
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(16.0),
+                                          child: Center(
+                                              child:
+                                                  CircularProgressIndicator()),
+                                        )
+                                      : Padding(
+                                          padding: const EdgeInsets.all(16.0),
+                                          child: Center(
+                                            child: Text(
+                                              'さらに読み込む',
+                                              style: TextStyle(
+                                                color: Colors.grey[600],
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                }
+
+                                final hourSlot =
+                                    _groupedLogs.keys.elementAt(index);
                                 final logsInHour = _groupedLogs[hourSlot] ?? [];
 
-                                // 時間帯の表示フォーマット
-                                final timeFormat = '${hourSlot.hour.toString().padLeft(2, '0')}:00';
+                                // 時間帯の表示フォーマット（日付と時刻を含める）
+                                final timeFormat =
+                                    '${hourSlot.month}/${hourSlot.day} ${hourSlot.hour.toString().padLeft(2, '0')}:00';
 
                                 return Card(
                                   margin: const EdgeInsets.symmetric(
@@ -264,7 +329,8 @@ class _LogScreenState extends State<LogScreen> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(12.0),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         // 時間帯の表示
                                         Text(
@@ -277,11 +343,16 @@ class _LogScreenState extends State<LogScreen> {
                                         const SizedBox(height: 8),
                                         // その時間帯のログアイコンを横に並べて表示
                                         logsInHour.isEmpty
-                                            ? const Text('記録なし', style: TextStyle(color: Colors.grey))
+                                            ? const Text('記録なし',
+                                                style: TextStyle(
+                                                    color: Colors.grey))
                                             : Wrap(
                                                 spacing: 8.0,
                                                 runSpacing: 8.0,
-                                                children: logsInHour.map((log) => _buildLogIcon(log)).toList(),
+                                                children: logsInHour
+                                                    .map((log) =>
+                                                        _buildLogIcon(log))
+                                                    .toList(),
                                               ),
                                       ],
                                     ),
