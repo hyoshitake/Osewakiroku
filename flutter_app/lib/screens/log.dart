@@ -218,10 +218,6 @@ class _LogScreenState extends State<LogScreen> {
   }
 
   Future<void> _addLog(String logType) async {
-    setState(() {
-      _isLoading = true;
-    });
-
     final newLog = Log(
       timestamp: DateTime.now(),
       logType: logType,
@@ -230,28 +226,44 @@ class _LogScreenState extends State<LogScreen> {
       data2: '',
     );
 
-    try {
-      // Google Sheetsにログを追加
-      final success = await GoogleSheetsService.instance.addLog(newLog);
+    // 即座にUIを更新（ローディング状態にしない）
+    setState(() {
+      _logs.add(newLog);
+      _groupLogs(_logs); // ログを再グループ化
+    });
 
-      if (success) {
-        // ログをローカルにも追加してUI更新
-        setState(() {
-          _logs.add(newLog);
-          _groupLogs(_logs); // ログを再グループ化
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage = 'Google Sheetsへの書き込みに失敗しました';
-          _isLoading = false;
-        });
+    // バックグラウンドでGoogle Sheetsにデータを送信
+    _saveToGoogleSheetsInBackground(newLog);
+  }
+
+  // バックグラウンドでGoogle Sheetsに保存するメソッド
+  Future<void> _saveToGoogleSheetsInBackground(Log log) async {
+    try {
+      final success = await GoogleSheetsService.instance.addLog(log);
+
+      if (!success) {
+        // エラーの場合のみユーザーに通知（UIはブロックしない）
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Google Sheetsへの保存に失敗しました'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'エラーが発生しました: $e';
-        _isLoading = false;
-      });
+      // エラーの場合のみユーザーに通知（UIはブロックしない）
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('保存エラー: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 

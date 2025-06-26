@@ -1,0 +1,3 @@
+flutter_app/lib/screens/log.dartの_addLogでログを追加した後に画面全体がloadingになります。
+_groupLogsはGoogleSheetのレスポンスを利用せずに、即時追加してください。
+_groupLogsにデータを追加後にGoogleSheetにデータをプッシュしてください。バックグラウンドで処理してください。
