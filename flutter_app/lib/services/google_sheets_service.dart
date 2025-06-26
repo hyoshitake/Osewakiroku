@@ -139,7 +139,6 @@ class GoogleSheetsService {
       return dataRows.map((row) {
         // エポック日付（小数点付の数値）をDateTimeに変換する処理
         DateTime timestamp;
-        debugPrint('row[0]: ${row[0]}');
         try {
           // まず標準的なISO8601形式での解析を試みる
           timestamp = DateTime.parse(row[0]);
@@ -147,7 +146,6 @@ class GoogleSheetsService {
           try {
             // Google Sheetsの日付シリアル値の場合（1900年1月1日からの経過日数）
             final serialValue = double.parse(row[0]);
-            debugPrint('serialValue: $serialValue');
 
             // Google Sheetsの日付シリアル値を日時に変換
             // Google Sheetsの基準日: 1899年12月30日（Excelとの互換性のため）
@@ -165,7 +163,6 @@ class GoogleSheetsService {
             resultDate = resultDate.add(Duration(seconds: totalSeconds));
 
             timestamp = resultDate;
-            debugPrint('timestamp: $timestamp');
           } catch (e) {
             // どちらの形式でも解析できない場合は現在時刻を使用
             debugPrint('タイムスタンプの解析エラー: ${row[0]}');
