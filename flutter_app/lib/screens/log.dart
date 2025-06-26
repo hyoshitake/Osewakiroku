@@ -19,7 +19,7 @@ class _LogScreenState extends State<LogScreen> {
   SplayTreeMap<DateTime, List<Log>> _groupedLogs =
       SplayTreeMap<DateTime, List<Log>>((a, b) => b.compareTo(a));
   ScrollController _scrollController = ScrollController();
-  int _displayedHours = 12; // 表示する時間数（初期は12時間）
+  int _displayedHours = 48; // 表示する時間数（初期は2日）
 
   @override
   void initState() {
@@ -36,8 +36,9 @@ class _LogScreenState extends State<LogScreen> {
 
   // スクロールリスナー（インフィニティスクロール用）
   void _scrollListener() {
-    if (_scrollController.position.pixels ==
-            _scrollController.position.maxScrollExtent &&
+    // スクロール位置が80%に達したら追加読み込みを開始
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent * 0.8 &&
         !_isLoadingMore) {
       _loadMoreLogs();
     }
@@ -354,11 +355,28 @@ class _LogScreenState extends State<LogScreen> {
                                       : Padding(
                                           padding: const EdgeInsets.all(16.0),
                                           child: Center(
-                                            child: Text(
-                                              'さらに読み込む',
-                                              style: TextStyle(
-                                                color: Colors.grey[600],
-                                                fontSize: 14,
+                                            child: GestureDetector(
+                                              onTap: () => _loadMoreLogs(),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 12.0,
+                                                        horizontal: 24.0),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[100],
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                  border: Border.all(
+                                                      color: Colors.grey[300]!),
+                                                ),
+                                                child: Text(
+                                                  'さらに読み込む',
+                                                  style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
                                               ),
                                             ),
                                           ),
