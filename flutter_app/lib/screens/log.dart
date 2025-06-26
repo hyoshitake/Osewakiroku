@@ -254,6 +254,54 @@ class _LogScreenState extends State<LogScreen> {
     }
   }
 
+  // 表示用のアイテムリストを生成するメソッド（日付区切り線を含む）
+  List<Map<String, dynamic>> _getDisplayItems() {
+    List<Map<String, dynamic>> displayItems = [];
+    String? currentDate;
+
+    for (final hourSlot in _groupedLogs.keys) {
+      final dateString = '${hourSlot.year}年${hourSlot.month}月${hourSlot.day}日';
+
+      // 日付が変わった場合は区切り線を追加
+      if (currentDate != dateString) {
+        displayItems.add({
+          'type': 'date',
+          'date': dateString,
+        });
+        currentDate = dateString;
+      }
+
+      // 時間行を追加
+      displayItems.add({
+        'type': 'hour',
+        'hourSlot': hourSlot,
+        'logs': _groupedLogs[hourSlot] ?? [],
+      });
+    }
+
+    return displayItems;
+  }
+
+  // コンパクトなログアイコンウィジェットを構築するメソッド
+  Widget _buildCompactLogIcon(Log log) {
+    return GestureDetector(
+      onTap: () => _showLogDetails(log),
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: _getLogTypeColor(log.logType),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          _getLogTypeIcon(log.logType),
+          size: 16,
+          color: Colors.black54,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -289,11 +337,13 @@ class _LogScreenState extends State<LogScreen> {
                           ? const Center(child: Text('ログはまだありません'))
                           : ListView.builder(
                               controller: _scrollController,
-                              itemCount: _groupedLogs.length +
+                              itemCount: _getDisplayItems().length +
                                   (_isLoadingMore ? 1 : 1), // 「さらに読み込む」用の追加項目
                               itemBuilder: (context, index) {
+                                final displayItems = _getDisplayItems();
+
                                 // 最後の項目は「さらに読み込む」またはローディング表示
-                                if (index == _groupedLogs.length) {
+                                if (index == displayItems.length) {
                                   return _isLoadingMore
                                       ? const Padding(
                                           padding: EdgeInsets.all(16.0),
@@ -315,47 +365,76 @@ class _LogScreenState extends State<LogScreen> {
                                         );
                                 }
 
-                                final hourSlot =
-                                    _groupedLogs.keys.elementAt(index);
-                                final logsInHour = _groupedLogs[hourSlot] ?? [];
+                                final item = displayItems[index];
 
-                                // 時間帯の表示フォーマット（日付と時刻を含める）
+                                // 日付区切り線の表示
+                                if (item['type'] == 'date') {
+                                  return Column(
+                                    children: [
+                                      const Divider(
+                                        color: Colors.grey,
+                                        thickness: 1,
+                                        height: 20,
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8.0),
+                                        child: Text(
+                                          item['date'],
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+
+                                // 時間行の表示
+                                final hourSlot = item['hourSlot'] as DateTime;
+                                final logsInHour = item['logs'] as List<Log>;
                                 final timeFormat =
-                                    '${hourSlot.month}/${hourSlot.day} ${hourSlot.hour.toString().padLeft(2, '0')}:00';
+                                    hourSlot.hour.toString().padLeft(2, '0');
 
-                                return Card(
-                                  margin: const EdgeInsets.symmetric(
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
                                       horizontal: 16.0, vertical: 4.0),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        // 時間帯の表示
-                                        Text(
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      // 左側に時間（HH）のみ表示
+                                      SizedBox(
+                                        width: 30,
+                                        child: Text(
                                           timeFormat,
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 16,
+                                            fontSize: 14,
                                           ),
                                         ),
-                                        const SizedBox(height: 8),
-                                        // その時間帯のログアイコンを横に並べて表示
-                                        logsInHour.isEmpty
+                                      ),
+                                      const SizedBox(width: 16),
+                                      // その時間帯のログアイコンを横に並べて表示
+                                      Expanded(
+                                        child: logsInHour.isEmpty
                                             ? const Text('記録なし',
                                                 style: TextStyle(
-                                                    color: Colors.grey))
+                                                    color: Colors.grey,
+                                                    fontSize: 12))
                                             : Wrap(
-                                                spacing: 8.0,
-                                                runSpacing: 8.0,
+                                                spacing: 6.0,
+                                                runSpacing: 4.0,
                                                 children: logsInHour
                                                     .map((log) =>
-                                                        _buildLogIcon(log))
+                                                        _buildCompactLogIcon(
+                                                            log))
                                                     .toList(),
                                               ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 );
                               },
