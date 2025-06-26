@@ -139,16 +139,33 @@ class GoogleSheetsService {
       return dataRows.map((row) {
         // エポック日付（小数点付の数値）をDateTimeに変換する処理
         DateTime timestamp;
+        debugPrint('row[0]: ${row[0]}');
         try {
           // まず標準的なISO8601形式での解析を試みる
           timestamp = DateTime.parse(row[0]);
         } catch (e) {
           try {
-            // エポック日付の場合（秒単位）
-            final epochSeconds = double.parse(row[0]);
-            timestamp = DateTime.fromMillisecondsSinceEpoch(
-              (epochSeconds * 1000).round(),
-            );
+            // Google Sheetsの日付シリアル値の場合（1900年1月1日からの経過日数）
+            final serialValue = double.parse(row[0]);
+            debugPrint('serialValue: $serialValue');
+
+            // Google Sheetsの日付シリアル値を日時に変換
+            // Google Sheetsの基準日: 1899年12月30日（Excelとの互換性のため）
+            final baseDate = DateTime(1899, 12, 30);
+
+            // シリアル値の整数部分が日数、小数部分が時間
+            final days = serialValue.floor();
+            final timeFraction = serialValue - days;
+
+            // 日数を加算
+            var resultDate = baseDate.add(Duration(days: days));
+
+            // 時間部分を加算（24時間 = 1.0）
+            final totalSeconds = (timeFraction * 24 * 60 * 60).round();
+            resultDate = resultDate.add(Duration(seconds: totalSeconds));
+
+            timestamp = resultDate;
+            debugPrint('timestamp: $timestamp');
           } catch (e) {
             // どちらの形式でも解析できない場合は現在時刻を使用
             debugPrint('タイムスタンプの解析エラー: ${row[0]}');
