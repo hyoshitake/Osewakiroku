@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/log.dart';
 import '../services/google_sheets_service.dart';
+import 'nursing_timer_dialog.dart';
 import 'dart:collection';
 
 class LogScreen extends StatefulWidget {
@@ -217,6 +218,39 @@ class _LogScreenState extends State<LogScreen> {
     );
   }
 
+  // 授乳タイマーダイアログを表示するメソッド
+  Future<void> _showNursingTimer() async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => const NursingTimerDialog(),
+    );
+
+    if (result != null) {
+      // タイマーの結果を授乳ログとして記録
+      final side = result['side'] as String;
+      final duration = result['duration'] as int;
+      final minutes = duration ~/ 60;
+      final seconds = duration % 60;
+
+      final newLog = Log(
+        timestamp: DateTime.now(),
+        logType: '授乳',
+        message: '$side側 ${minutes}分${seconds}秒',
+        data1: side,
+        data2: duration.toString(),
+      );
+
+      // 即座にUIを更新
+      setState(() {
+        _logs.add(newLog);
+        _groupLogs(_logs);
+      });
+
+      // バックグラウンドでGoogle Sheetsに保存
+      _saveToGoogleSheetsInBackground(newLog);
+    }
+  }
+
   Future<void> _addLog(String logType) async {
     final newLog = Log(
       timestamp: DateTime.now(),
@@ -329,6 +363,25 @@ class _LogScreenState extends State<LogScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showNursingTimer,
+        backgroundColor: Colors.pink.shade200,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        label: const Text(
+          '授乳タイマー',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        icon: const Icon(
+          Icons.timer,
+          color: Colors.black87,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Stack(
