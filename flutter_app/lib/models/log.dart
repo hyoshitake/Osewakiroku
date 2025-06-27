@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class Log {
   final DateTime timestamp;
   final String logType;

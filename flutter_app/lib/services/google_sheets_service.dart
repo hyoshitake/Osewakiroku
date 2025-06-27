@@ -65,11 +65,8 @@ class GoogleSheetsService {
   Future<Worksheet> _getOrCreateWorksheet(
       Spreadsheet spreadsheet, String title) async {
     var worksheet = spreadsheet.worksheetByTitle(title);
-    if (worksheet == null) {
-      // ワークシートが存在しない場合は新規作成
-      worksheet = await spreadsheet.addWorksheet(title);
-    }
-    return worksheet!;
+    worksheet ??= await spreadsheet.addWorksheet(title);
+    return worksheet;
   }
 
   // ヘッダー行を確保

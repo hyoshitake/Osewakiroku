@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 class NursingTimerDialog extends StatefulWidget {
-  const NursingTimerDialog({Key? key}) : super(key: key);
+  const NursingTimerDialog({super.key});
 
   @override
   State<NursingTimerDialog> createState() => _NursingTimerDialogState();

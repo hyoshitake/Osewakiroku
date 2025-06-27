@@ -1,0 +1,1 @@
+flutter_app/lib/screens/log.dart のfloatingActionButton（授乳タイマーボタン）とPositionedで宣言されたうんち/おしっこ/授乳/ミルクボタンが被っています。授乳タイマーボタンをうんち/おしっこ/授乳/ミルクボタンよりも上に移動してください

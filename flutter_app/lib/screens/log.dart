@@ -5,7 +5,7 @@ import 'nursing_timer_dialog.dart';
 import 'dart:collection';
 
 class LogScreen extends StatefulWidget {
-  const LogScreen({Key? key}) : super(key: key);
+  const LogScreen({super.key});
 
   @override
   State<LogScreen> createState() => _LogScreenState();
@@ -235,7 +235,7 @@ class _LogScreenState extends State<LogScreen> {
       final newLog = Log(
         timestamp: DateTime.now(),
         logType: '授乳',
-        message: '$side側 ${minutes}分${seconds}秒',
+        message: '$side側 $minutes分$seconds秒',
         data1: side,
         data2: duration.toString(),
       );
@@ -363,22 +363,25 @@ class _LogScreenState extends State<LogScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showNursingTimer,
-        backgroundColor: Colors.pink.shade200,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        label: const Text(
-          '授乳タイマー',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.w500,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 100.0), // 下部ボタンより上に配置
+        child: FloatingActionButton.extended(
+          onPressed: _showNursingTimer,
+          backgroundColor: Colors.pink.shade200,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-        ),
-        icon: const Icon(
-          Icons.timer,
-          color: Colors.black87,
+          label: const Text(
+            '授乳タイマー',
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          icon: const Icon(
+            Icons.timer,
+            color: Colors.black87,
+          ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
