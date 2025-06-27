@@ -372,7 +372,7 @@ class _LogScreenState extends State<LogScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           label: const Text(
-            '授乳タイマー',
+            '授乳開始',
             style: TextStyle(
               color: Colors.black87,
               fontWeight: FontWeight.w500,

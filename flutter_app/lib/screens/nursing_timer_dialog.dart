@@ -11,8 +11,15 @@ class NursingTimerDialog extends StatefulWidget {
 class _NursingTimerDialogState extends State<NursingTimerDialog> {
   Timer? _timer;
   int _seconds = 0;
-  bool _isRunning = false;
+  bool _isRunning = true; // 開始時点でタイマーが動いている
   String _currentSide = '左'; // 左側または右側
+
+  @override
+  void initState() {
+    super.initState();
+    // ダイアログ開始時に即座にタイマーを開始
+    _startTimer();
+  }
 
   @override
   void dispose() {
@@ -31,24 +38,21 @@ class _NursingTimerDialogState extends State<NursingTimerDialog> {
     });
   }
 
-  void _stopTimer() {
+  void _pauseTimer() {
     setState(() {
       _isRunning = false;
     });
     _timer?.cancel();
   }
 
-  void _resetTimer() {
-    _timer?.cancel();
+  void _resumeTimer() {
     setState(() {
-      _seconds = 0;
-      _isRunning = false;
+      _isRunning = true;
     });
-  }
-
-  void _switchSide() {
-    setState(() {
-      _currentSide = _currentSide == '左' ? '右' : '左';
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _seconds++;
+      });
     });
   }
 
@@ -69,28 +73,68 @@ class _NursingTimerDialogState extends State<NursingTimerDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              '授乳タイマー',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // 現在の側表示
+            // 左胸と右胸のトグルスイッチ
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.pink.shade100,
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(25),
               ),
-              child: Text(
-                '現在: $_currentSide側',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _currentSide = '左';
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _currentSide == '左'
+                            ? Colors.pink.shade200
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '左胸',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontWeight: _currentSide == '左'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _currentSide = '右';
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _currentSide == '右'
+                            ? Colors.pink.shade200
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '右胸',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontWeight: _currentSide == '右'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -115,59 +159,31 @@ class _NursingTimerDialogState extends State<NursingTimerDialog> {
 
             const SizedBox(height: 20),
 
-            // 側切り替えボタン
+            // 一時停止/再開ボタン（アイコン付き）
             ElevatedButton(
-              onPressed: _switchSide,
+              onPressed: _isRunning ? _pauseTimer : _resumeTimer,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pink.shade200,
-                minimumSize: const Size(double.infinity, 40),
+                backgroundColor:
+                    _isRunning ? Colors.orange.shade200 : Colors.green.shade200,
+                minimumSize: const Size(120, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: Text(
-                '${_currentSide == '左' ? '右' : '左'}側に切り替え',
-                style: const TextStyle(color: Colors.black87),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // タイマー制御ボタン
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: _isRunning ? _stopTimer : _startTimer,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isRunning
-                        ? Colors.red.shade200
-                        : Colors.green.shade200,
-                    minimumSize: const Size(80, 40),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _isRunning ? Icons.pause : Icons.play_arrow,
+                    color: Colors.black87,
                   ),
-                  child: Text(
-                    _isRunning ? '停止' : '開始',
+                  const SizedBox(width: 8),
+                  Text(
+                    _isRunning ? '一時停止' : '再開',
                     style: const TextStyle(color: Colors.black87),
                   ),
-                ),
-                ElevatedButton(
-                  onPressed: _resetTimer,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey.shade200,
-                    minimumSize: const Size(80, 40),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'リセット',
-                    style: TextStyle(color: Colors.black87),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
 
             const SizedBox(height: 20),
